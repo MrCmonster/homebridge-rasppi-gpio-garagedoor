@@ -32,7 +32,7 @@ RaspPiGPIOGarageDoorAccessory.prototype = {
      var isClosed = this.isClosed();
      if (isClosed != this.wasClosed) {
        this.wasClosed = isClosed;
-       var state = isClosed ? DoorState.CLOSED : DoorState.OPEN;       
+       var state = isClosed ? DoorState.CLOSED : DoorState.OPEN;
        this.log("Door state changed to " + (isClosed ? "CLOSED" : "OPEN"));
        if (!this.operating) {
          this.currentDoorState.setValue(state);
@@ -58,7 +58,7 @@ RaspPiGPIOGarageDoorAccessory.prototype = {
       .setCharacteristic(Characteristic.Manufacturer, "Opensource Community")
       .setCharacteristic(Characteristic.Model, "RaspPi GPIO GarageDoor")
       .setCharacteristic(Characteristic.SerialNumber, "Version 1.0.0");
-  
+
     this.wasClosed = isClosed;
     this.operating = false;
     setTimeout(this.monitorDoorState.bind(this), this.doorPollInMs);
@@ -73,11 +73,7 @@ RaspPiGPIOGarageDoorAccessory.prototype = {
   },
 
   switchOff: function() {
-    if (this.doorSwitchInverted){
-       fs.writeFileSync("/sys/class/gpio/gpio"+this.doorSwitchPin+"/value", "1");
-    } else {
-       fs.writeFileSync("/sys/class/gpio/gpio"+this.doorSwitchPin+"/value", "0");
-    }
+    fs.writeFileSync("/sys/class/gpio/gpio"+this.doorSwitchPin+"/value", this.doorSwitchInverted);
     this.log("Turning off GarageDoor Relay");
   },
 
@@ -99,18 +95,14 @@ RaspPiGPIOGarageDoorAccessory.prototype = {
     var isClosed = this.isClosed();
     if ((state == DoorState.OPEN && isClosed) || (state == DoorState.CLOSED && !isClosed)) {
         this.log("Triggering GarageDoor Relay");
-        this.operating = true; 
+        this.operating = true;
         if (state == DoorState.OPEN) {
             this.currentDoorState.setValue(DoorState.OPENING);
         } else {
             this.currentDoorState.setValue(DoorState.CLOSING);
         }
         setTimeout(this.setFinalDoorState.bind(this), this.doorOpensInSeconds * 1000);
-      if (this.doorSwitchInverted) {
-        fs.writeFileSync("/sys/class/gpio/gpio"+this.doorSwitchPin+"/value", "0");
-      } else {
-        fs.writeFileSync("/sys/class/gpio/gpio"+this.doorSwitchPin+"/value", "1");
-      }
+        fs.writeFileSync("/sys/class/gpio/gpio"+this.doorSwitchPin+"/value", this.doorSwitchInverted);
         setTimeout(this.switchOff.bind(this), 1000);
     }
 
@@ -120,7 +112,7 @@ RaspPiGPIOGarageDoorAccessory.prototype = {
 
   getState: function(callback) {
     var isClosed = this.isClosed();
-    this.log("GarageDoor is " + (isClosed ? "CLOSED ("+DoorState.CLOSED+")" : "OPEN ("+DoorState.OPEN+")")); 
+    this.log("GarageDoor is " + (isClosed ? "CLOSED ("+DoorState.CLOSED+")" : "OPEN ("+DoorState.OPEN+")"));
     callback(null, (isClosed ? DoorState.CLOSED : DoorState.OPEN));
   },
 
